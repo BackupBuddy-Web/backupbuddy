@@ -82,16 +82,31 @@
                     </div>
                 </div>
 
-                <!-- Contacts View -->
-                <div id="contacts-view" class="view">
-                    <div class="view-header">
-                        <h1>Trusted Contacts</h1>
-                    </div>
-                    <div class="coming-soon">
-                        <h3>Coming Soon</h3>
-                        <p>Trusted contacts feature will be available in the next update.</p>
-                    </div>
-                </div>
+        <!-- Contacts View -->
+<div id="contacts-view" class="view">
+    <div class="view-header">
+        <h1>Trusted Contacts</h1>
+        <button id="add-contact-btn" class="btn-primary">+ Add Contact</button>
+    </div>
+
+    <div id="contacts-list" class="contacts-list">
+        <!-- Contacts will load here -->
+    </div>
+
+    <div id="contacts-empty-state" class="empty-state">
+        <div class="empty-icon">👥</div>
+        <h3>No trusted contacts yet</h3>
+        <p>Add people who should have emergency access to your vault.</p>
+        <button id="add-first-contact" class="btn-primary">Add Your First Contact</button>
+    </div>
+    
+    <div class="plan-limit-notice" style="margin-top: 2rem; padding: 1rem; background: #eff6ff; border-radius: 8px; border-left: 4px solid #1e40af;">
+        <p style="color: #1e40af; margin: 0;">
+            <strong>Free plan:</strong> 1 trusted contact • 
+            <strong>Premium:</strong> 3 trusted contacts
+        </p>
+    </div>
+</div>
 
                 <!-- Check-in View -->
                 <div id="checkin-view" class="view">
