@@ -150,28 +150,98 @@
         </p>
     </div>
 </div>
+<!-- Check-in View -->
+<div id="checkin-view" class="view">
+    <div class="view-header">
+        <h1>Check-Ins</h1>
+    </div>
 
-                <!-- Check-in View -->
-                <div id="checkin-view" class="view">
-                    <div class="view-header">
-                        <h1>Check-Ins</h1>
-                    </div>
-                    <div class="coming-soon">
-                        <h3>Coming Soon</h3>
-                        <p>Check-in system will be available in the next update.</p>
-                    </div>
-                </div>
+    <!-- Check-in Status Card -->
+    <div class="checkin-status-card">
+        <div class="status-indicator" id="status-indicator">
+            <div class="status-icon" id="status-icon">✅</div>
+            <h2 id="status-title">You're all set!</h2>
+            <p id="status-message">Your next check-in is due in <strong id="days-remaining">30 days</strong></p>
+        </div>
 
-                <!-- Settings View -->
-                <div id="settings-view" class="view">
-                    <div class="view-header">
-                        <h1>Settings</h1>
-                    </div>
-                    <div class="coming-soon">
-                        <h3>Coming Soon</h3>
-                        <p>Settings will be available in the next update.</p>
-                    </div>
-                </div>
+        <div class="checkin-details">
+            <div class="detail-item">
+                <span class="detail-label">Last Check-In:</span>
+                <span class="detail-value" id="last-checkin-date">Never</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Next Check-In Due:</span>
+                <span class="detail-value" id="next-checkin-date">Not set</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label">Check-In Frequency:</span>
+                <span class="detail-value" id="current-frequency">30 days</span>
+            </div>
+        </div>
+
+        <button id="checkin-now-btn" class="btn-primary btn-large" style="margin-top: 2rem; width: 100%; max-width: 400px;">
+            ✓ I'm OK - Check In Now
+        </button>
+    </div>
+
+    <!-- Check-In Settings Card -->
+    <div class="checkin-settings-card">
+        <h3>Check-In Settings</h3>
+        <p style="color: #6b7280; margin-bottom: 1.5rem;">How often should we check that you're okay?</p>
+
+        <div class="frequency-options">
+            <label class="frequency-option">
+                <input type="radio" name="frequency" value="7">
+                <span class="frequency-label">
+                    <strong>Every 7 days</strong>
+                    <small>Weekly check-ins</small>
+                </span>
+            </label>
+
+            <label class="frequency-option">
+                <input type="radio" name="frequency" value="14">
+                <span class="frequency-label">
+                    <strong>Every 14 days</strong>
+                    <small>Bi-weekly check-ins</small>
+                </span>
+            </label>
+
+            <label class="frequency-option">
+                <input type="radio" name="frequency" value="30" checked>
+                <span class="frequency-label">
+                    <strong>Every 30 days</strong>
+                    <small>Monthly check-ins (recommended)</small>
+                </span>
+            </label>
+
+            <label class="frequency-option premium-only">
+                <input type="radio" name="frequency" value="60">
+                <span class="frequency-label">
+                    <strong>Every 60 days</strong>
+                    <small>Premium only</small>
+                </span>
+            </label>
+
+            <label class="frequency-option premium-only">
+                <input type="radio" name="frequency" value="90">
+                <span class="frequency-label">
+                    <strong>Every 90 days</strong>
+                    <small>Premium only</small>
+                </span>
+            </label>
+        </div>
+
+        <button id="save-frequency-btn" class="btn-primary" style="margin-top: 1.5rem;">Save Frequency</button>
+    </div>
+
+    <!-- Check-In History -->
+    <div class="checkin-history-card">
+        <h3>Check-In History</h3>
+        <div id="checkin-history-list">
+            <p style="color: #6b7280; text-align: center; padding: 2rem;">No check-ins yet</p>
+        </div>
+    </div>
+</div>
             </div>
         </main>
     </div>
