@@ -527,3 +527,161 @@ body {
     font-size: 0.85rem;
     font-weight: 600;
 }
+/* Check-In System */
+.checkin-status-card,
+.checkin-settings-card,
+.checkin-history-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    margin-bottom: 2rem;
+}
+
+.status-indicator {
+    text-align: center;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.status-indicator.ok {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+}
+
+.status-indicator.warning {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+}
+
+.status-indicator.overdue {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+}
+
+.status-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.status-indicator h2 {
+    font-size: 2rem;
+    color: #111827;
+    margin-bottom: 0.5rem;
+}
+
+.status-indicator p {
+    font-size: 1.1rem;
+    color: #4b5563;
+}
+
+.checkin-details {
+    background: #f9fafb;
+    padding: 1.5rem;
+    border-radius: 8px;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.detail-item:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.detail-value {
+    color: #111827;
+    font-weight: 600;
+}
+
+.btn-large {
+    padding: 1.25rem 2rem;
+    font-size: 1.2rem;
+}
+
+.checkin-settings-card h3,
+.checkin-history-card h3 {
+    font-size: 1.5rem;
+    color: #111827;
+    margin-bottom: 1rem;
+}
+
+.frequency-options {
+    display: grid;
+    gap: 1rem;
+}
+
+.frequency-option {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.frequency-option:hover {
+    border-color: #1e40af;
+    background: #eff6ff;
+}
+
+.frequency-option input[type="radio"] {
+    margin-right: 1rem;
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.frequency-option input[type="radio"]:checked ~ .frequency-label {
+    color: #1e40af;
+}
+
+.frequency-label {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.frequency-label strong {
+    font-size: 1.1rem;
+    color: #111827;
+    margin-bottom: 0.25rem;
+}
+
+.frequency-label small {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.premium-only {
+    opacity: 0.6;
+    position: relative;
+}
+
+.premium-only::after {
+    content: '🔒';
+    position: absolute;
+    right: 1rem;
+    font-size: 1.5rem;
+}
+
+.premium-only input[type="radio"] {
+    cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+    .status-indicator h2 {
+        font-size: 1.5rem;
+    }
+    
+    .status-icon {
+        font-size: 3rem;
+    }
+}
