@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BackupBuddy - Your Digital Vault</title>
+    <link rel="stylesheet" href="app.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Auth Container (Login/Signup) -->
+    <div id="auth-container" class="auth-container">
+        <div class="auth-box">
+            <div class="logo">BackupBuddy</div>
+            <h2 id="auth-title">Welcome Back</h2>
+            
+            <!-- Auth Form -->
+            <form id="auth-form" class="auth-form">
+                <input type="email" id="email" placeholder="Email" required>
+                <input type="password" id="password" placeholder="Password" required>
+                <button type="submit" class="btn-primary" id="auth-submit">Sign In</button>
+            </form>
+            
+            <p class="auth-toggle">
+                <span id="toggle-text">Don't have an account?</span>
+                <a href="#" id="toggle-mode">Sign up</a>
+            </p>
+            
+            <div id="auth-error" class="error-message"></div>
+        </div>
+    </div>
+
+    <!-- App Container (Dashboard) -->
+    <div id="app-container" class="app-container" style="display: none;">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="logo">BackupBuddy</div>
+            <div class="header-actions">
+                <span id="user-email" class="user-email"></span>
+                <button id="logout-btn" class="btn-secondary">Log Out</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="app-main">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <nav class="nav-menu">
+                    <a href="#" class="nav-item active" data-view="vault">
+                        <span>🔐</span> My Vault
+                    </a>
+                    <a href="#" class="nav-item" data-view="contacts">
+                        <span>👥</span> Trusted Contacts
+                    </a>
+                    <a href="#" class="nav-item" data-view="checkin">
+                        <span>✅</span> Check-Ins
+                    </a>
+                    <a href="#" class="nav-item" data-view="settings">
+                        <span>⚙️</span> Settings
+                    </a>
+                </nav>
+            </aside>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Vault View -->
+                <div id="vault-view" class="view active">
+                    <div class="view-header">
+                        <h1>My Vault</h1>
+                        <button id="add-entry-btn" class="btn-primary">+ Add Entry</button>
+                    </div>
+
+                    <div id="entries-list" class="entries-list">
+                        <!-- Vault entries will load here -->
+                    </div>
+
+                    <div id="empty-state" class="empty-state">
+                        <div class="empty-icon">🔐</div>
+                        <h3>Your vault is empty</h3>
+                        <p>Add your first entry to get started protecting your digital life.</p>
+                        <button id="add-first-entry" class="btn-primary">Add Your First Entry</button>
+                    </div>
+                </div>
+
+                <!-- Contacts View -->
+                <div id="contacts-view" class="view">
+                    <div class="view-header">
+                        <h1>Trusted Contacts</h1>
+                    </div>
+                    <div class="coming-soon">
+                        <h3>Coming Soon</h3>
+                        <p>Trusted contacts feature will be available in the next update.</p>
+                    </div>
+                </div>
+
+                <!-- Check-in View -->
+                <div id="checkin-view" class="view">
+                    <div class="view-header">
+                        <h1>Check-Ins</h1>
+                    </div>
+                    <div class="coming-soon">
+                        <h3>Coming Soon</h3>
+                        <p>Check-in system will be available in the next update.</p>
+                    </div>
+                </div>
+
+                <!-- Settings View -->
+                <div id="settings-view" class="view">
+                    <div class="view-header">
+                        <h1>Settings</h1>
+                    </div>
+                    <div class="coming-soon">
+                        <h3>Coming Soon</h3>
+                        <p>Settings will be available in the next update.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Add/Edit Entry Modal -->
+    <div id="entry-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Add Entry</h2>
+                <button id="close-modal" class="close-btn">&times;</button>
+            </div>
+            <form id="entry-form">
+                <div class="form-group">
+                    <label>Title *</label>
+                    <input type="text" id="entry-title" placeholder="e.g., Gmail Account" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="entry-category">
+                        <option value="Financial">Financial</option>
+                        <option value="Legal">Legal</option>
+                        <option value="Medical">Medical</option>
+                        <option value="Personal">Personal</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Type</label>
+                    <select id="entry-type">
+                        <option value="Password">Password</option>
+                        <option value="Bank Account">Bank Account</option>
+                        <option value="Insurance">Insurance</option>
+                        <option value="Document">Document</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Username/Account</label>
+                    <input type="text" id="entry-username" placeholder="Optional">
+                </div>
+
+                <div class="form-group">
+                    <label>Password/Account Number</label>
+                    <input type="text" id="entry-password" placeholder="Optional">
+                </div>
+
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="entry-notes" rows="4" placeholder="Additional information..."></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" id="cancel-entry" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Entry</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
