@@ -465,3 +465,65 @@ body {
         align-items: stretch;
     }
 }
+/* Contacts List */
+.contacts-list {
+    display: grid;
+    gap: 1rem;
+}
+
+.contact-card {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s;
+}
+
+.contact-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.contact-info {
+    flex: 1;
+}
+
+.contact-name {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.5rem;
+}
+
+.contact-email {
+    color: #6b7280;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+}
+
+.contact-relationship {
+    display: inline-block;
+    background: #eff6ff;
+    color: #1e40af;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.contact-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.contact-actions button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
