@@ -416,3 +416,180 @@ async function deleteContact(id) {
     
     loadContacts();
 }
+// ============================================
+// CHECK-IN SYSTEM
+// ============================================
+
+// DOM Elements for check-ins
+const statusIndicator = document.getElementById('status-indicator');
+const statusIcon = document.getElementById('status-icon');
+const statusTitle = document.getElementById('status-title');
+const statusMessage = document.getElementById('status-message');
+const daysRemaining = document.getElementById('days-remaining');
+const lastCheckinDate = document.getElementById('last-checkin-date');
+const nextCheckinDate = document.getElementById('next-checkin-date');
+const currentFrequency = document.getElementById('current-frequency');
+const checkinNowBtn = document.getElementById('checkin-now-btn');
+const saveFrequencyBtn = document.getElementById('save-frequency-btn');
+
+// Load check-in data when switching to check-in view
+document.querySelector('[data-view="checkin"]').addEventListener('click', () => {
+    if (currentUser) {
+        loadCheckinStatus();
+    }
+});
+
+// Load check-in status
+async function loadCheckinStatus() {
+    const { data, error } = await supabaseClient
+        .from('check_ins')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .single();
+    
+    if (error && error.code !== 'PGRST116') {
+        console.error('Error loading check-in:', error);
+        return;
+    }
+    
+    if (!data) {
+        // Create initial check-in record
+        await createInitialCheckin();
+        return;
+    }
+    
+    displayCheckinStatus(data);
+}
+
+// Create initial check-in record
+async function createInitialCheckin() {
+    const { data, error } = await supabaseClient
+        .from('check_ins')
+        .insert([{
+            user_id: currentUser.id,
+            frequency_days: 30,
+            last_check_in: new Date().toISOString()
+        }])
+        .select()
+        .single();
+    
+    if (error) {
+        console.error('Error creating check-in:', error);
+        return;
+    }
+    
+    displayCheckinStatus(data);
+}
+
+// Display check-in status
+function displayCheckinStatus(data) {
+    const now = new Date();
+    const lastCheckin = new Date(data.last_check_in);
+    const nextCheckin = new Date(data.next_check_in);
+    
+    // Calculate days remaining
+    const daysLeft = Math.ceil((nextCheckin - now) / (1000 * 60 * 60 * 24));
+    
+    // Update UI
+    lastCheckinDate.textContent = formatDate(lastCheckin);
+    nextCheckinDate.textContent = formatDate(nextCheckin);
+    currentFrequency.textContent = `${data.frequency_days} days`;
+    
+    // Set selected frequency
+    document.querySelector(`input[name="frequency"][value="${data.frequency_days}"]`).checked = true;
+    
+    // Update status indicator
+    if (daysLeft < 0) {
+        // Overdue
+        statusIndicator.className = 'status-indicator overdue';
+        statusIcon.textContent = '⚠️';
+        statusTitle.textContent = 'Check-In Overdue!';
+        statusMessage.innerHTML = `You missed your check-in by <strong>${Math.abs(daysLeft)} days</strong>`;
+    } else if (daysLeft <= 3) {
+        // Warning
+        statusIndicator.className = 'status-indicator warning';
+        statusIcon.textContent = '⏰';
+        statusTitle.textContent = 'Check-In Due Soon';
+        statusMessage.innerHTML = `Your check-in is due in <strong>${daysLeft} day${daysLeft === 1 ? '' : 's'}</strong>`;
+    } else {
+        // All good
+        statusIndicator.className = 'status-indicator ok';
+        statusIcon.textContent = '✅';
+        statusTitle.textContent = "You're all set!";
+        statusMessage.innerHTML = `Your next check-in is due in <strong>${daysLeft} days</strong>`;
+    }
+}
+
+// Format date
+function formatDate(date) {
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return date.toLocaleDateString('en-GB', options);
+}
+
+// Check in now
+checkinNowBtn.addEventListener('click', async () => {
+    const { data, error } = await supabaseClient
+        .from('check_ins')
+        .update({
+            last_check_in: new Date().toISOString()
+        })
+        .eq('user_id', currentUser.id)
+        .select()
+        .single();
+    
+    if (error) {
+        console.error('Error checking in:', error);
+        alert('Error checking in. Please try again.');
+        return;
+    }
+    
+    // Show success message
+    const originalText = checkinNowBtn.textContent;
+    checkinNowBtn.textContent = '✓ Check-In Successful!';
+    checkinNowBtn.style.background = '#10b981';
+    
+    setTimeout(() => {
+        checkinNowBtn.textContent = originalText;
+        checkinNowBtn.style.background = '';
+    }, 2000);
+    
+    displayCheckinStatus(data);
+});
+
+// Save frequency
+saveFrequencyBtn.addEventListener('click', async () => {
+    const selectedFrequency = parseInt(document.querySelector('input[name="frequency"]:checked').value);
+    
+    // Check if premium frequency (60 or 90 days)
+    if ((selectedFrequency === 60 || selectedFrequency === 90)) {
+        alert('60 and 90 day check-ins are only available on the Premium plan. Upgrade in Settings!');
+        return;
+    }
+    
+    const { data, error } = await supabaseClient
+        .from('check_ins')
+        .update({
+            frequency_days: selectedFrequency
+        })
+        .eq('user_id', currentUser.id)
+        .select()
+        .single();
+    
+    if (error) {
+        console.error('Error updating frequency:', error);
+        alert('Error updating frequency. Please try again.');
+        return;
+    }
+    
+    // Show success message
+    const originalText = saveFrequencyBtn.textContent;
+    saveFrequencyBtn.textContent = '✓ Saved!';
+    saveFrequencyBtn.style.background = '#10b981';
+    
+    setTimeout(() => {
+        saveFrequencyBtn.textContent = originalText;
+        saveFrequencyBtn.style.background = '';
+    }, 2000);
+    
+    displayCheckinStatus(data);
+});
