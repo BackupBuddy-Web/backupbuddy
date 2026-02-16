@@ -253,3 +253,166 @@ async function deleteEntry(id) {
     
     loadEntries();
 }
+// ============================================
+// TRUSTED CONTACTS FUNCTIONALITY
+// ============================================
+
+let currentContact = null;
+
+// DOM Elements for contacts
+const contactsList = document.getElementById('contacts-list');
+const contactsEmptyState = document.getElementById('contacts-empty-state');
+const addContactBtn = document.getElementById('add-contact-btn');
+const addFirstContact = document.getElementById('add-first-contact');
+const contactModal = document.getElementById('contact-modal');
+const contactForm = document.getElementById('contact-form');
+const closeContactModal = document.getElementById('close-contact-modal');
+const cancelContact = document.getElementById('cancel-contact');
+const contactModalTitle = document.getElementById('contact-modal-title');
+
+// Load contacts when switching to contacts view
+document.querySelector('[data-view="contacts"]').addEventListener('click', () => {
+    if (currentUser) {
+        loadContacts();
+    }
+});
+
+// Load contacts function
+async function loadContacts() {
+    const { data, error } = await supabaseClient
+        .from('trusted_contacts')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .order('created_at', { ascending: false });
+    
+    if (error) {
+        console.error('Error loading contacts:', error);
+        return;
+    }
+    
+    if (data.length === 0) {
+        contactsEmptyState.style.display = 'block';
+        contactsList.innerHTML = '';
+    } else {
+        contactsEmptyState.style.display = 'none';
+        displayContacts(data);
+    }
+}
+
+// Display contacts
+function displayContacts(contacts) {
+    contactsList.innerHTML = contacts.map(contact => `
+        <div class="contact-card">
+            <div class="contact-info">
+                <div class="contact-name">${contact.name}</div>
+                <div class="contact-email">${contact.email}</div>
+                <span class="contact-relationship">${contact.relationship || 'Other'}</span>
+            </div>
+            <div class="contact-actions">
+                <button class="edit-btn" onclick="editContact('${contact.id}')">Edit</button>
+                <button class="delete-btn" onclick="deleteContact('${contact.id}')">Delete</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+// Add contact buttons
+addContactBtn.addEventListener('click', () => openContactModal());
+addFirstContact.addEventListener('click', () => openContactModal());
+
+// Open contact modal
+function openContactModal(contact = null) {
+    currentContact = contact;
+    if (contact) {
+        contactModalTitle.textContent = 'Edit Contact';
+        document.getElementById('contact-name').value = contact.name;
+        document.getElementById('contact-email').value = contact.email;
+        document.getElementById('contact-relationship').value = contact.relationship || 'Other';
+    } else {
+        contactModalTitle.textContent = 'Add Trusted Contact';
+        contactForm.reset();
+    }
+    contactModal.classList.add('show');
+}
+
+// Close modal
+closeContactModal.addEventListener('click', () => contactModal.classList.remove('show'));
+cancelContact.addEventListener('click', () => contactModal.classList.remove('show'));
+
+// Save contact
+contactForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    // Check limits (free = 1, premium = 3)
+    if (!currentContact) {
+        const { data: existingContacts } = await supabaseClient
+            .from('trusted_contacts')
+            .select('id')
+            .eq('user_id', currentUser.id);
+        
+        // For now, everyone is on free plan (1 contact limit)
+        // TODO: Check user's actual plan
+        if (existingContacts && existingContacts.length >= 1) {
+            alert('Free plan allows 1 trusted contact. Upgrade to Premium for 3 contacts!');
+            return;
+        }
+    }
+    
+    const contactData = {
+        name: document.getElementById('contact-name').value,
+        email: document.getElementById('contact-email').value,
+        relationship: document.getElementById('contact-relationship').value,
+        user_id: currentUser.id
+    };
+    
+    if (currentContact) {
+        // Update existing contact
+        const { error } = await supabaseClient
+            .from('trusted_contacts')
+            .update(contactData)
+            .eq('id', currentContact.id);
+        if (error) console.error('Error updating contact:', error);
+    } else {
+        // Create new contact
+        const { error } = await supabaseClient
+            .from('trusted_contacts')
+            .insert([contactData]);
+        if (error) console.error('Error creating contact:', error);
+    }
+    
+    contactModal.classList.remove('show');
+    loadContacts();
+});
+
+// Edit contact
+async function editContact(id) {
+    const { data, error } = await supabaseClient
+        .from('trusted_contacts')
+        .select('*')
+        .eq('id', id)
+        .single();
+    
+    if (error) {
+        console.error('Error loading contact:', error);
+        return;
+    }
+    
+    openContactModal(data);
+}
+
+// Delete contact
+async function deleteContact(id) {
+    if (!confirm('Are you sure you want to remove this trusted contact?')) return;
+    
+    const { error } = await supabaseClient
+        .from('trusted_contacts')
+        .delete()
+        .eq('id', id);
+    
+    if (error) {
+        console.error('Error deleting contact:', error);
+        return;
+    }
+    
+    loadContacts();
+}
