@@ -33,6 +33,12 @@ const modalTitle = document.getElementById('modal-title');
 
 // Check if user is already logged in
 checkAuth();
+// Load check-ins when user logs in
+async function initializeCheckins() {
+    if (currentUser) {
+        await loadCheckinStatus();
+    }
+}
 
 async function checkAuth() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -109,6 +115,12 @@ function showApp() {
 function showError(message) {
     authError.textContent = message;
     authError.classList.add('show');
+    // Initialize check-ins
+    setTimeout(() => {
+        if (document.getElementById('checkin-now-btn')) {
+            loadCheckinStatus();
+        }
+    }, 100);
 }
 
 // Navigation
