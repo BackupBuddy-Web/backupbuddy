@@ -605,3 +605,127 @@ saveFrequencyBtn.addEventListener('click', async () => {
     
     displayCheckinStatus(data);
 });
+// ============================================
+// SETTINGS FUNCTIONALITY
+// ============================================
+
+// Load settings when switching to settings view
+document.querySelector('[data-view="settings"]').addEventListener('click', () => {
+    if (currentUser) {
+        loadSettings();
+    }
+});
+
+// Load settings
+function loadSettings() {
+    // Display email
+    const settingsEmail = document.getElementById('settings-email');
+    if (settingsEmail) {
+        settingsEmail.textContent = currentUser.email;
+    }
+
+    // Display account created date
+    const settingsCreated = document.getElementById('settings-created');
+    if (settingsCreated) {
+        const createdDate = new Date(currentUser.created_at);
+        settingsCreated.textContent = createdDate.toLocaleDateString('en-GB', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+}
+
+// Change password
+const passwordForm = document.getElementById('password-form');
+if (passwordForm) {
+    passwordForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const newPassword = document.getElementById('new-password').value;
+        const confirmPassword = document.getElementById('confirm-password').value;
+        const passwordError = document.getElementById('password-error');
+        const passwordSuccess = document.getElementById('password-success');
+
+        // Reset messages
+        passwordError.classList.remove('show');
+        passwordSuccess.style.display = 'none';
+
+        // Check passwords match
+        if (newPassword !== confirmPassword) {
+            passwordError.textContent = 'Passwords do not match!';
+            passwordError.classList.add('show');
+            return;
+        }
+
+        // Check password length
+        if (newPassword.length < 8) {
+            passwordError.textContent = 'Password must be at least 8 characters!';
+            passwordError.classList.add('show');
+            return;
+        }
+
+        try {
+            const { error } = await supabaseClient.auth.updateUser({
+                password: newPassword
+            });
+
+            if (error) throw error;
+
+            // Show success
+            passwordSuccess.style.display = 'block';
+            passwordForm.reset();
+
+            // Hide success after 3 seconds
+            setTimeout(() => {
+                passwordSuccess.style.display = 'none';
+            }, 3000);
+
+        } catch (error) {
+            passwordError.textContent = error.message;
+            passwordError.classList.add('show');
+        }
+    });
+}
+
+// Delete account
+const deleteAccountBtn = document.getElementById('delete-account-btn');
+if (deleteAccountBtn) {
+    deleteAccountBtn.addEventListener('click', async () => {
+        // First confirmation
+        const confirm1 = confirm('Are you sure you want to delete your account? This cannot be undone!');
+        if (!confirm1) return;
+
+        // Second confirmation
+        const confirm2 = confirm('This will permanently delete ALL your vault entries, trusted contacts, and account data. Are you absolutely sure?');
+        if (!confirm2) return;
+
+        try {
+            // Delete all user data first
+            await supabaseClient
+                .from('vault_entries')
+                .delete()
+                .eq('user_id', currentUser.id);
+
+            await supabaseClient
+                .from('trusted_contacts')
+                .delete()
+                .eq('user_id', currentUser.id);
+
+            await supabaseClient
+                .from('check_ins')
+                .delete()
+                .eq('user_id', currentUser.id);
+
+            // Sign out
+            await supabaseClient.auth.signOut();
+
+            // Redirect to landing page
+            alert('Your account has been deleted. We\'re sorry to see you go!');
+            window.location.href = 'index.html';
+
+        } catch (error) {
+            alert('Error deleting account: ' + error.message);
+        }
+    });
+}
