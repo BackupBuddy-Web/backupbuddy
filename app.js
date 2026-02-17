@@ -4,15 +4,11 @@ const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
 const { createClient } = supabase;
 const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const { createClient } = supabase;
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// Global state
 let currentUser = null;
 let currentEntry = null;
+let currentContact = null;
 let isSignupMode = false;
 
-// DOM Elements
 const authContainer = document.getElementById('auth-container');
 const appContainer = document.getElementById('app-container');
 const authForm = document.getElementById('auth-form');
@@ -33,14 +29,7 @@ const closeModal = document.getElementById('close-modal');
 const cancelEntry = document.getElementById('cancel-entry');
 const modalTitle = document.getElementById('modal-title');
 
-// Check if user is already logged in
 checkAuth();
-// Load check-ins when user logs in
-async function initializeCheckins() {
-    if (currentUser) {
-        await loadCheckinStatus();
-    }
-}
 
 async function checkAuth() {
     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -50,7 +39,6 @@ async function checkAuth() {
     }
 }
 
-// Auth form submission
 authForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('email').value;
@@ -58,17 +46,11 @@ authForm.addEventListener('submit', async (e) => {
     
     try {
         if (isSignupMode) {
-            const { data, error } = await supabaseClient.auth.signUp({
-                email,
-                password
-            });
+            const { data, error } = await supabaseClient.auth.signUp({ email, password });
             if (error) throw error;
             showError('Check your email to confirm your account!');
         } else {
-            const { data, error } = await supabaseClient.auth.signInWithPassword({
-                email,
-                password
-            });
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
             if (error) throw error;
             currentUser = data.user;
             showApp();
@@ -78,7 +60,6 @@ authForm.addEventListener('submit', async (e) => {
     }
 });
 
-// Toggle between login and signup
 toggleMode.addEventListener('click', (e) => {
     e.preventDefault();
     isSignupMode = !isSignupMode;
@@ -96,7 +77,6 @@ toggleMode.addEventListener('click', (e) => {
     authError.classList.remove('show');
 });
 
-// Logout
 logoutBtn.addEventListener('click', async () => {
     await supabaseClient.auth.signOut();
     currentUser = null;
@@ -105,7 +85,6 @@ logoutBtn.addEventListener('click', async () => {
     authForm.reset();
 });
 
-// Show app
 function showApp() {
     authContainer.style.display = 'none';
     appContainer.style.display = 'flex';
@@ -113,32 +92,22 @@ function showApp() {
     loadEntries();
 }
 
-// Show error
 function showError(message) {
     authError.textContent = message;
     authError.classList.add('show');
-    // Initialize check-ins
-    setTimeout(() => {
-        if (document.getElementById('checkin-now-btn')) {
-            loadCheckinStatus();
-        }
-    }, 100);
 }
 
-// Navigation
 document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', (e) => {
         e.preventDefault();
         document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
         item.classList.add('active');
-        
         const view = item.dataset.view;
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.getElementById(`${view}-view`).classList.add('active');
     });
 });
 
-// Load vault entries
 async function loadEntries() {
     const { data, error } = await supabaseClient
         .from('vault_entries')
@@ -160,7 +129,6 @@ async function loadEntries() {
     }
 }
 
-// Display entries
 function displayEntries(entries) {
     entriesList.innerHTML = entries.map(entry => `
         <div class="entry-card" data-id="${entry.id}">
@@ -178,7 +146,6 @@ function displayEntries(entries) {
     `).join('');
 }
 
-// Add entry
 addEntryBtn.addEventListener('click', () => openModal());
 addFirstEntry.addEventListener('click', () => openModal());
 
@@ -202,7 +169,6 @@ function openModal(entry = null) {
 closeModal.addEventListener('click', () => entryModal.classList.remove('show'));
 cancelEntry.addEventListener('click', () => entryModal.classList.remove('show'));
 
-// Save entry
 entryForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -235,7 +201,6 @@ entryForm.addEventListener('submit', async (e) => {
     loadEntries();
 });
 
-// Edit entry
 async function editEntry(id) {
     const { data, error } = await supabaseClient
         .from('vault_entries')
@@ -247,11 +212,9 @@ async function editEntry(id) {
         console.error('Error loading entry:', error);
         return;
     }
-    
     openModal(data);
 }
 
-// Delete entry
 async function deleteEntry(id) {
     if (!confirm('Are you sure you want to delete this entry?')) return;
     
@@ -264,16 +227,13 @@ async function deleteEntry(id) {
         console.error('Error deleting entry:', error);
         return;
     }
-    
     loadEntries();
 }
+
 // ============================================
-// TRUSTED CONTACTS FUNCTIONALITY
+// TRUSTED CONTACTS
 // ============================================
 
-let currentContact = null;
-
-// DOM Elements for contacts
 const contactsList = document.getElementById('contacts-list');
 const contactsEmptyState = document.getElementById('contacts-empty-state');
 const addContactBtn = document.getElementById('add-contact-btn');
@@ -284,14 +244,10 @@ const closeContactModal = document.getElementById('close-contact-modal');
 const cancelContact = document.getElementById('cancel-contact');
 const contactModalTitle = document.getElementById('contact-modal-title');
 
-// Load contacts when switching to contacts view
 document.querySelector('[data-view="contacts"]').addEventListener('click', () => {
-    if (currentUser) {
-        loadContacts();
-    }
+    if (currentUser) loadContacts();
 });
 
-// Load contacts function
 async function loadContacts() {
     const { data, error } = await supabaseClient
         .from('trusted_contacts')
@@ -313,7 +269,6 @@ async function loadContacts() {
     }
 }
 
-// Display contacts
 function displayContacts(contacts) {
     contactsList.innerHTML = contacts.map(contact => `
         <div class="contact-card">
@@ -330,11 +285,9 @@ function displayContacts(contacts) {
     `).join('');
 }
 
-// Add contact buttons
 addContactBtn.addEventListener('click', () => openContactModal());
 addFirstContact.addEventListener('click', () => openContactModal());
 
-// Open contact modal
 function openContactModal(contact = null) {
     currentContact = contact;
     if (contact) {
@@ -349,23 +302,18 @@ function openContactModal(contact = null) {
     contactModal.classList.add('show');
 }
 
-// Close modal
 closeContactModal.addEventListener('click', () => contactModal.classList.remove('show'));
 cancelContact.addEventListener('click', () => contactModal.classList.remove('show'));
 
-// Save contact
 contactForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    // Check limits (free = 1, premium = 3)
     if (!currentContact) {
         const { data: existingContacts } = await supabaseClient
             .from('trusted_contacts')
             .select('id')
             .eq('user_id', currentUser.id);
         
-        // For now, everyone is on free plan (1 contact limit)
-        // TODO: Check user's actual plan
         if (existingContacts && existingContacts.length >= 1) {
             alert('Free plan allows 1 trusted contact. Upgrade to Premium for 3 contacts!');
             return;
@@ -380,14 +328,12 @@ contactForm.addEventListener('submit', async (e) => {
     };
     
     if (currentContact) {
-        // Update existing contact
         const { error } = await supabaseClient
             .from('trusted_contacts')
             .update(contactData)
             .eq('id', currentContact.id);
         if (error) console.error('Error updating contact:', error);
     } else {
-        // Create new contact
         const { error } = await supabaseClient
             .from('trusted_contacts')
             .insert([contactData]);
@@ -398,7 +344,6 @@ contactForm.addEventListener('submit', async (e) => {
     loadContacts();
 });
 
-// Edit contact
 async function editContact(id) {
     const { data, error } = await supabaseClient
         .from('trusted_contacts')
@@ -410,11 +355,9 @@ async function editContact(id) {
         console.error('Error loading contact:', error);
         return;
     }
-    
     openContactModal(data);
 }
 
-// Delete contact
 async function deleteContact(id) {
     if (!confirm('Are you sure you want to remove this trusted contact?')) return;
     
@@ -427,33 +370,27 @@ async function deleteContact(id) {
         console.error('Error deleting contact:', error);
         return;
     }
-    
     loadContacts();
 }
+
 // ============================================
 // CHECK-IN SYSTEM
 // ============================================
 
-// DOM Elements for check-ins
 const statusIndicator = document.getElementById('status-indicator');
 const statusIcon = document.getElementById('status-icon');
 const statusTitle = document.getElementById('status-title');
 const statusMessage = document.getElementById('status-message');
-const daysRemaining = document.getElementById('days-remaining');
 const lastCheckinDate = document.getElementById('last-checkin-date');
 const nextCheckinDate = document.getElementById('next-checkin-date');
 const currentFrequency = document.getElementById('current-frequency');
 const checkinNowBtn = document.getElementById('checkin-now-btn');
 const saveFrequencyBtn = document.getElementById('save-frequency-btn');
 
-// Load check-in data when switching to check-in view
 document.querySelector('[data-view="checkin"]').addEventListener('click', () => {
-    if (currentUser) {
-        loadCheckinStatus();
-    }
+    if (currentUser) loadCheckinStatus();
 });
 
-// Load check-in status
 async function loadCheckinStatus() {
     const { data, error } = await supabaseClient
         .from('check_ins')
@@ -467,7 +404,6 @@ async function loadCheckinStatus() {
     }
     
     if (!data) {
-        // Create initial check-in record
         await createInitialCheckin();
         return;
     }
@@ -475,7 +411,6 @@ async function loadCheckinStatus() {
     displayCheckinStatus(data);
 }
 
-// Create initial check-in record
 async function createInitialCheckin() {
     const { data, error } = await supabaseClient
         .from('check_ins')
@@ -491,42 +426,33 @@ async function createInitialCheckin() {
         console.error('Error creating check-in:', error);
         return;
     }
-    
     displayCheckinStatus(data);
 }
 
-// Display check-in status
 function displayCheckinStatus(data) {
     const now = new Date();
     const lastCheckin = new Date(data.last_check_in);
     const nextCheckin = new Date(data.next_check_in);
-    
-    // Calculate days remaining
     const daysLeft = Math.ceil((nextCheckin - now) / (1000 * 60 * 60 * 24));
     
-    // Update UI
     lastCheckinDate.textContent = formatDate(lastCheckin);
     nextCheckinDate.textContent = formatDate(nextCheckin);
     currentFrequency.textContent = `${data.frequency_days} days`;
     
-    // Set selected frequency
-    document.querySelector(`input[name="frequency"][value="${data.frequency_days}"]`).checked = true;
+    const freqRadio = document.querySelector(`input[name="frequency"][value="${data.frequency_days}"]`);
+    if (freqRadio) freqRadio.checked = true;
     
-    // Update status indicator
     if (daysLeft < 0) {
-        // Overdue
         statusIndicator.className = 'status-indicator overdue';
         statusIcon.textContent = '⚠️';
         statusTitle.textContent = 'Check-In Overdue!';
         statusMessage.innerHTML = `You missed your check-in by <strong>${Math.abs(daysLeft)} days</strong>`;
     } else if (daysLeft <= 3) {
-        // Warning
         statusIndicator.className = 'status-indicator warning';
         statusIcon.textContent = '⏰';
         statusTitle.textContent = 'Check-In Due Soon';
         statusMessage.innerHTML = `Your check-in is due in <strong>${daysLeft} day${daysLeft === 1 ? '' : 's'}</strong>`;
     } else {
-        // All good
         statusIndicator.className = 'status-indicator ok';
         statusIcon.textContent = '✅';
         statusTitle.textContent = "You're all set!";
@@ -534,99 +460,85 @@ function displayCheckinStatus(data) {
     }
 }
 
-// Format date
 function formatDate(date) {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
     return date.toLocaleDateString('en-GB', options);
 }
 
-// Check in now
-checkinNowBtn.addEventListener('click', async () => {
-    const { data, error } = await supabaseClient
-        .from('check_ins')
-        .update({
-            last_check_in: new Date().toISOString()
-        })
-        .eq('user_id', currentUser.id)
-        .select()
-        .single();
-    
-    if (error) {
-        console.error('Error checking in:', error);
-        alert('Error checking in. Please try again.');
-        return;
-    }
-    
-    // Show success message
-    const originalText = checkinNowBtn.textContent;
-    checkinNowBtn.textContent = '✓ Check-In Successful!';
-    checkinNowBtn.style.background = '#10b981';
-    
-    setTimeout(() => {
-        checkinNowBtn.textContent = originalText;
-        checkinNowBtn.style.background = '';
-    }, 2000);
-    
-    displayCheckinStatus(data);
-});
+if (checkinNowBtn) {
+    checkinNowBtn.addEventListener('click', async () => {
+        const { data, error } = await supabaseClient
+            .from('check_ins')
+            .update({ last_check_in: new Date().toISOString() })
+            .eq('user_id', currentUser.id)
+            .select()
+            .single();
+        
+        if (error) {
+            console.error('Error checking in:', error);
+            alert('Error checking in. Please try again.');
+            return;
+        }
+        
+        const originalText = checkinNowBtn.textContent;
+        checkinNowBtn.textContent = '✓ Check-In Successful!';
+        checkinNowBtn.style.background = '#10b981';
+        
+        setTimeout(() => {
+            checkinNowBtn.textContent = originalText;
+            checkinNowBtn.style.background = '';
+        }, 2000);
+        
+        displayCheckinStatus(data);
+    });
+}
 
-// Save frequency
-saveFrequencyBtn.addEventListener('click', async () => {
-    const selectedFrequency = parseInt(document.querySelector('input[name="frequency"]:checked').value);
-    
-    // Check if premium frequency (60 or 90 days)
-    if ((selectedFrequency === 60 || selectedFrequency === 90)) {
-        alert('60 and 90 day check-ins are only available on the Premium plan. Upgrade in Settings!');
-        return;
-    }
-    
-    const { data, error } = await supabaseClient
-        .from('check_ins')
-        .update({
-            frequency_days: selectedFrequency
-        })
-        .eq('user_id', currentUser.id)
-        .select()
-        .single();
-    
-    if (error) {
-        console.error('Error updating frequency:', error);
-        alert('Error updating frequency. Please try again.');
-        return;
-    }
-    
-    // Show success message
-    const originalText = saveFrequencyBtn.textContent;
-    saveFrequencyBtn.textContent = '✓ Saved!';
-    saveFrequencyBtn.style.background = '#10b981';
-    
-    setTimeout(() => {
-        saveFrequencyBtn.textContent = originalText;
-        saveFrequencyBtn.style.background = '';
-    }, 2000);
-    
-    displayCheckinStatus(data);
-});
+if (saveFrequencyBtn) {
+    saveFrequencyBtn.addEventListener('click', async () => {
+        const selectedFrequency = parseInt(document.querySelector('input[name="frequency"]:checked').value);
+        
+        if (selectedFrequency === 60 || selectedFrequency === 90) {
+            alert('60 and 90 day check-ins are Premium only. Upgrade in Settings!');
+            return;
+        }
+        
+        const { data, error } = await supabaseClient
+            .from('check_ins')
+            .update({ frequency_days: selectedFrequency })
+            .eq('user_id', currentUser.id)
+            .select()
+            .single();
+        
+        if (error) {
+            console.error('Error updating frequency:', error);
+            return;
+        }
+        
+        const originalText = saveFrequencyBtn.textContent;
+        saveFrequencyBtn.textContent = '✓ Saved!';
+        saveFrequencyBtn.style.background = '#10b981';
+        
+        setTimeout(() => {
+            saveFrequencyBtn.textContent = originalText;
+            saveFrequencyBtn.style.background = '';
+        }, 2000);
+        
+        displayCheckinStatus(data);
+    });
+}
+
 // ============================================
-// SETTINGS FUNCTIONALITY
+// SETTINGS
 // ============================================
 
-// Load settings when switching to settings view
 document.querySelector('[data-view="settings"]').addEventListener('click', () => {
-    if (currentUser) {
-        loadSettings();
-    }
+    if (currentUser) loadSettings();
 });
 
-// Load settings
 function loadSettings() {
-    // Display email
     const settingsEmail = document.getElementById('settings-email');
-    if (settingsEmail) {
-        settingsEmail.textContent = currentUser.email;
-    }
+    if (settingsEmail) settingsEmail.textContent = currentUser.email;
 
-    // Display account created date
     const settingsCreated = document.getElementById('settings-created');
     if (settingsCreated) {
         const createdDate = new Date(currentUser.created_at);
@@ -638,7 +550,6 @@ function loadSettings() {
     }
 }
 
-// Change password
 const passwordForm = document.getElementById('password-form');
 if (passwordForm) {
     passwordForm.addEventListener('submit', async (e) => {
@@ -649,18 +560,15 @@ if (passwordForm) {
         const passwordError = document.getElementById('password-error');
         const passwordSuccess = document.getElementById('password-success');
 
-        // Reset messages
         passwordError.classList.remove('show');
         passwordSuccess.style.display = 'none';
 
-        // Check passwords match
         if (newPassword !== confirmPassword) {
             passwordError.textContent = 'Passwords do not match!';
             passwordError.classList.add('show');
             return;
         }
 
-        // Check password length
         if (newPassword.length < 8) {
             passwordError.textContent = 'Password must be at least 8 characters!';
             passwordError.classList.add('show');
@@ -674,11 +582,9 @@ if (passwordForm) {
 
             if (error) throw error;
 
-            // Show success
             passwordSuccess.style.display = 'block';
             passwordForm.reset();
 
-            // Hide success after 3 seconds
             setTimeout(() => {
                 passwordSuccess.style.display = 'none';
             }, 3000);
@@ -690,42 +596,22 @@ if (passwordForm) {
     });
 }
 
-// Delete account
 const deleteAccountBtn = document.getElementById('delete-account-btn');
 if (deleteAccountBtn) {
     deleteAccountBtn.addEventListener('click', async () => {
-        // First confirmation
         const confirm1 = confirm('Are you sure you want to delete your account? This cannot be undone!');
         if (!confirm1) return;
 
-        // Second confirmation
         const confirm2 = confirm('This will permanently delete ALL your vault entries, trusted contacts, and account data. Are you absolutely sure?');
         if (!confirm2) return;
 
         try {
-            // Delete all user data first
-            await supabaseClient
-                .from('vault_entries')
-                .delete()
-                .eq('user_id', currentUser.id);
-
-            await supabaseClient
-                .from('trusted_contacts')
-                .delete()
-                .eq('user_id', currentUser.id);
-
-            await supabaseClient
-                .from('check_ins')
-                .delete()
-                .eq('user_id', currentUser.id);
-
-            // Sign out
+            await supabaseClient.from('vault_entries').delete().eq('user_id', currentUser.id);
+            await supabaseClient.from('trusted_contacts').delete().eq('user_id', currentUser.id);
+            await supabaseClient.from('check_ins').delete().eq('user_id', currentUser.id);
             await supabaseClient.auth.signOut();
-
-            // Redirect to landing page
             alert('Your account has been deleted. We\'re sorry to see you go!');
             window.location.href = 'index.html';
-
         } catch (error) {
             alert('Error deleting account: ' + error.message);
         }
