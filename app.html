@@ -155,7 +155,125 @@
     <div class="view-header">
         <h1>Check-Ins</h1>
     </div>
+    <!-- Settings View -->
+<div id="settings-view" class="view">
+    <div class="view-header">
+        <h1>Settings</h1>
+    </div>
 
+    <div style="max-width: 800px;">
+
+        <!-- Account Card -->
+        <div class="settings-card">
+            <h2 class="settings-card-title">👤 Account Information</h2>
+            <div class="settings-card-body">
+                <div class="settings-row">
+                    <div>
+                        <label class="settings-label">Email Address</label>
+                        <p id="settings-email" class="settings-value">Loading...</p>
+                    </div>
+                </div>
+                <div class="settings-row">
+                    <div>
+                        <label class="settings-label">Account Created</label>
+                        <p id="settings-created" class="settings-value">Loading...</p>
+                    </div>
+                </div>
+                <div class="settings-row">
+                    <div>
+                        <label class="settings-label">Current Plan</label>
+                        <p class="settings-value">
+                            <span id="current-plan-badge" class="plan-badge free">Free Plan</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Password Card -->
+        <div class="settings-card">
+            <h2 class="settings-card-title">🔒 Change Password</h2>
+            <div class="settings-card-body">
+                <form id="password-form">
+                    <div class="form-group">
+                        <label>New Password</label>
+                        <input type="password" id="new-password" placeholder="Enter new password (min 8 characters)" minlength="8" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm New Password</label>
+                        <input type="password" id="confirm-password" placeholder="Confirm new password" required>
+                    </div>
+                    <div id="password-error" class="error-message"></div>
+                    <div id="password-success" style="color: #10b981; background: #d1fae5; padding: 0.75rem; border-radius: 8px; margin-top: 1rem; display: none;">
+                        ✅ Password updated successfully!
+                    </div>
+                    <button type="submit" class="btn-primary" style="margin-top: 1rem;">Update Password</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Subscription Card -->
+        <div class="settings-card">
+            <h2 class="settings-card-title">⭐ Subscription</h2>
+            <div class="settings-card-body">
+                <div class="plan-card free-plan">
+                    <div class="plan-header">
+                        <div>
+                            <h3>Free Plan</h3>
+                            <p>Currently active</p>
+                        </div>
+                        <span class="plan-badge free">Current Plan</span>
+                    </div>
+                    <div class="plan-features">
+                        <p>✅ 5 vault entries</p>
+                        <p>✅ 1 trusted contact</p>
+                        <p>✅ Monthly check-ins</p>
+                        <p>✅ Email support</p>
+                    </div>
+                </div>
+
+                <div class="plan-card premium-plan">
+                    <div class="plan-header">
+                        <div>
+                            <h3>Premium Plan</h3>
+                            <p style="font-size: 2rem; font-weight: 700; margin-top: 0.5rem;">£9.99<span style="font-size: 1rem; font-weight: 400; opacity: 0.8;">/month</span></p>
+                        </div>
+                        <span class="plan-badge premium">⭐ Popular</span>
+                    </div>
+                    <div class="plan-features">
+                        <p>✅ <strong>Unlimited</strong> vault entries</p>
+                        <p>✅ <strong>3</strong> trusted contacts</p>
+                        <p>✅ <strong>Custom</strong> check-in schedule</p>
+                        <p>✅ <strong>1GB</strong> file storage</p>
+                        <p>✅ Priority support</p>
+                        <p>✅ Two-factor authentication</p>
+                    </div>
+                    <a href="YOUR_STRIPE_LINK_HERE" target="_blank" id="upgrade-btn" class="btn-primary" style="display: block; text-align: center; margin-top: 1.5rem; text-decoration: none;">
+                        Upgrade to Premium - £9.99/month
+                    </a>
+                    <p style="text-align: center; margin-top: 1rem; color: rgba(255,255,255,0.8); font-size: 0.9rem;">
+                        Cancel anytime • 14-day money-back guarantee
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Danger Zone Card -->
+        <div class="settings-card danger-card">
+            <h2 class="settings-card-title">⚠️ Danger Zone</h2>
+            <div class="settings-card-body">
+                <div class="settings-row">
+                    <div>
+                        <p style="font-weight: 600; color: #111827; margin-bottom: 0.25rem;">Delete Account</p>
+                        <p style="color: #6b7280; font-size: 0.9rem;">Permanently delete your account and all data. This cannot be undone.</p>
+                    </div>
+                    <button id="delete-account-btn" class="btn-danger">Delete Account</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
     <!-- Check-in Status Card -->
     <div class="checkin-status-card">
         <div class="status-indicator" id="status-indicator">
