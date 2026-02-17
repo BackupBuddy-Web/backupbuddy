@@ -9,6 +9,10 @@ let currentEntry = null;
 let currentContact = null;
 let isSignupMode = false;
 
+// ============================================
+// AUTH
+// ============================================
+
 const authContainer = document.getElementById('auth-container');
 const appContainer = document.getElementById('app-container');
 const authForm = document.getElementById('auth-form');
@@ -17,17 +21,8 @@ const authSubmit = document.getElementById('auth-submit');
 const toggleMode = document.getElementById('toggle-mode');
 const toggleText = document.getElementById('toggle-text');
 const authError = document.getElementById('auth-error');
-const userEmail = document.getElementById('user-email');
+const userEmailEl = document.getElementById('user-email');
 const logoutBtn = document.getElementById('logout-btn');
-const entriesList = document.getElementById('entries-list');
-const emptyState = document.getElementById('empty-state');
-const addEntryBtn = document.getElementById('add-entry-btn');
-const addFirstEntry = document.getElementById('add-first-entry');
-const entryModal = document.getElementById('entry-modal');
-const entryForm = document.getElementById('entry-form');
-const closeModal = document.getElementById('close-modal');
-const cancelEntry = document.getElementById('cancel-entry');
-const modalTitle = document.getElementById('modal-title');
 
 checkAuth();
 
@@ -43,10 +38,9 @@ authForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    
     try {
         if (isSignupMode) {
-            const { data, error } = await supabaseClient.auth.signUp({ email, password });
+            const { error } = await supabaseClient.auth.signUp({ email, password });
             if (error) throw error;
             showError('Check your email to confirm your account!');
         } else {
@@ -88,7 +82,7 @@ logoutBtn.addEventListener('click', async () => {
 function showApp() {
     authContainer.style.display = 'none';
     appContainer.style.display = 'flex';
-    userEmail.textContent = currentUser.email;
+    userEmailEl.textContent = currentUser.email;
     loadEntries();
 }
 
@@ -97,6 +91,10 @@ function showError(message) {
     authError.classList.add('show');
 }
 
+// ============================================
+// NAVIGATION
+// ============================================
+
 document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', (e) => {
         e.preventDefault();
@@ -104,9 +102,27 @@ document.querySelectorAll('.nav-item').forEach(item => {
         item.classList.add('active');
         const view = item.dataset.view;
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-        document.getElementById(`${view}-view`).classList.add('active');
+        document.getElementById(view + '-view').classList.add('active');
+
+        if (view === 'contacts') loadContacts();
+        if (view === 'checkin') loadCheckinStatus();
+        if (view === 'settings') loadSettings();
     });
 });
+
+// ============================================
+// VAULT ENTRIES
+// ============================================
+
+const entriesList = document.getElementById('entries-list');
+const emptyState = document.getElementById('empty-state');
+const addEntryBtn = document.getElementById('add-entry-btn');
+const addFirstEntry = document.getElementById('add-first-entry');
+const entryModal = document.getElementById('entry-modal');
+const entryForm = document.getElementById('entry-form');
+const closeModal = document.getElementById('close-modal');
+const cancelEntry = document.getElementById('cancel-entry');
+const modalTitle = document.getElementById('modal-title');
 
 async function loadEntries() {
     const { data, error } = await supabaseClient
@@ -114,40 +130,33 @@ async function loadEntries() {
         .select('*')
         .eq('user_id', currentUser.id)
         .order('created_at', { ascending: false });
-    
-    if (error) {
-        console.error('Error loading entries:', error);
-        return;
-    }
-    
+
+    if (error) { console.error('Error loading entries:', error); return; }
+
     if (data.length === 0) {
         emptyState.style.display = 'block';
         entriesList.innerHTML = '';
     } else {
         emptyState.style.display = 'none';
-        displayEntries(data);
+        entriesList.innerHTML = data.map(entry => `
+            <div class="entry-card">
+                <div class="entry-header">
+                    <div class="entry-title">${entry.title}</div>
+                    <div class="entry-category">${entry.category || 'Other'}</div>
+                </div>
+                <div class="entry-type">${entry.entry_type || 'General'}</div>
+                ${entry.content && entry.content.notes ? '<div class="entry-preview">' + entry.content.notes.substring(0, 100) + '...</div>' : ''}
+                <div class="entry-actions">
+                    <button class="edit-btn" onclick="editEntry('${entry.id}')">Edit</button>
+                    <button class="delete-btn" onclick="deleteEntry('${entry.id}')">Delete</button>
+                </div>
+            </div>
+        `).join('');
     }
 }
 
-function displayEntries(entries) {
-    entriesList.innerHTML = entries.map(entry => `
-        <div class="entry-card" data-id="${entry.id}">
-            <div class="entry-header">
-                <div class="entry-title">${entry.title}</div>
-                <div class="entry-category">${entry.category || 'Other'}</div>
-            </div>
-            <div class="entry-type">${entry.entry_type || 'General'}</div>
-            ${entry.content?.notes ? `<div class="entry-preview">${entry.content.notes.substring(0, 100)}...</div>` : ''}
-            <div class="entry-actions">
-                <button class="edit-btn" onclick="editEntry('${entry.id}')">Edit</button>
-                <button class="delete-btn" onclick="deleteEntry('${entry.id}')">Delete</button>
-            </div>
-        </div>
-    `).join('');
-}
-
-addEntryBtn.addEventListener('click', () => openModal());
-addFirstEntry.addEventListener('click', () => openModal());
+if (addEntryBtn) addEntryBtn.addEventListener('click', () => openModal());
+if (addFirstEntry) addFirstEntry.addEventListener('click', () => openModal());
 
 function openModal(entry = null) {
     currentEntry = entry;
@@ -156,9 +165,9 @@ function openModal(entry = null) {
         document.getElementById('entry-title').value = entry.title;
         document.getElementById('entry-category').value = entry.category || 'Other';
         document.getElementById('entry-type').value = entry.entry_type || 'Other';
-        document.getElementById('entry-username').value = entry.content?.username || '';
-        document.getElementById('entry-password').value = entry.content?.password || '';
-        document.getElementById('entry-notes').value = entry.content?.notes || '';
+        document.getElementById('entry-username').value = entry.content ? entry.content.username || '' : '';
+        document.getElementById('entry-password').value = entry.content ? entry.content.password || '' : '';
+        document.getElementById('entry-notes').value = entry.content ? entry.content.notes || '' : '';
     } else {
         modalTitle.textContent = 'Add Entry';
         entryForm.reset();
@@ -166,12 +175,11 @@ function openModal(entry = null) {
     entryModal.classList.add('show');
 }
 
-closeModal.addEventListener('click', () => entryModal.classList.remove('show'));
-cancelEntry.addEventListener('click', () => entryModal.classList.remove('show'));
+if (closeModal) closeModal.addEventListener('click', () => entryModal.classList.remove('show'));
+if (cancelEntry) cancelEntry.addEventListener('click', () => entryModal.classList.remove('show'));
 
 entryForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
     const entryData = {
         title: document.getElementById('entry-title').value,
         category: document.getElementById('entry-category').value,
@@ -183,50 +191,25 @@ entryForm.addEventListener('submit', async (e) => {
         },
         user_id: currentUser.id
     };
-    
+
     if (currentEntry) {
-        const { error } = await supabaseClient
-            .from('vault_entries')
-            .update(entryData)
-            .eq('id', currentEntry.id);
-        if (error) console.error('Error updating entry:', error);
+        await supabaseClient.from('vault_entries').update(entryData).eq('id', currentEntry.id);
     } else {
-        const { error } = await supabaseClient
-            .from('vault_entries')
-            .insert([entryData]);
-        if (error) console.error('Error creating entry:', error);
+        await supabaseClient.from('vault_entries').insert([entryData]);
     }
-    
+
     entryModal.classList.remove('show');
     loadEntries();
 });
 
 async function editEntry(id) {
-    const { data, error } = await supabaseClient
-        .from('vault_entries')
-        .select('*')
-        .eq('id', id)
-        .single();
-    
-    if (error) {
-        console.error('Error loading entry:', error);
-        return;
-    }
-    openModal(data);
+    const { data } = await supabaseClient.from('vault_entries').select('*').eq('id', id).single();
+    if (data) openModal(data);
 }
 
 async function deleteEntry(id) {
     if (!confirm('Are you sure you want to delete this entry?')) return;
-    
-    const { error } = await supabaseClient
-        .from('vault_entries')
-        .delete()
-        .eq('id', id);
-    
-    if (error) {
-        console.error('Error deleting entry:', error);
-        return;
-    }
+    await supabaseClient.from('vault_entries').delete().eq('id', id);
     loadEntries();
 }
 
@@ -244,49 +227,38 @@ const closeContactModal = document.getElementById('close-contact-modal');
 const cancelContact = document.getElementById('cancel-contact');
 const contactModalTitle = document.getElementById('contact-modal-title');
 
-document.querySelector('[data-view="contacts"]').addEventListener('click', () => {
-    if (currentUser) loadContacts();
-});
-
 async function loadContacts() {
     const { data, error } = await supabaseClient
         .from('trusted_contacts')
         .select('*')
         .eq('user_id', currentUser.id)
         .order('created_at', { ascending: false });
-    
-    if (error) {
-        console.error('Error loading contacts:', error);
-        return;
-    }
-    
+
+    if (error) { console.error('Error loading contacts:', error); return; }
+
     if (data.length === 0) {
         contactsEmptyState.style.display = 'block';
         contactsList.innerHTML = '';
     } else {
         contactsEmptyState.style.display = 'none';
-        displayContacts(data);
+        contactsList.innerHTML = data.map(contact => `
+            <div class="contact-card">
+                <div class="contact-info">
+                    <div class="contact-name">${contact.name}</div>
+                    <div class="contact-email">${contact.email}</div>
+                    <span class="contact-relationship">${contact.relationship || 'Other'}</span>
+                </div>
+                <div class="contact-actions">
+                    <button class="edit-btn" onclick="editContact('${contact.id}')">Edit</button>
+                    <button class="delete-btn" onclick="deleteContact('${contact.id}')">Delete</button>
+                </div>
+            </div>
+        `).join('');
     }
 }
 
-function displayContacts(contacts) {
-    contactsList.innerHTML = contacts.map(contact => `
-        <div class="contact-card">
-            <div class="contact-info">
-                <div class="contact-name">${contact.name}</div>
-                <div class="contact-email">${contact.email}</div>
-                <span class="contact-relationship">${contact.relationship || 'Other'}</span>
-            </div>
-            <div class="contact-actions">
-                <button class="edit-btn" onclick="editContact('${contact.id}')">Edit</button>
-                <button class="delete-btn" onclick="deleteContact('${contact.id}')">Delete</button>
-            </div>
-        </div>
-    `).join('');
-}
-
-addContactBtn.addEventListener('click', () => openContactModal());
-addFirstContact.addEventListener('click', () => openContactModal());
+if (addContactBtn) addContactBtn.addEventListener('click', () => openContactModal());
+if (addFirstContact) addFirstContact.addEventListener('click', () => openContactModal());
 
 function openContactModal(contact = null) {
     currentContact = contact;
@@ -302,74 +274,46 @@ function openContactModal(contact = null) {
     contactModal.classList.add('show');
 }
 
-closeContactModal.addEventListener('click', () => contactModal.classList.remove('show'));
-cancelContact.addEventListener('click', () => contactModal.classList.remove('show'));
+if (closeContactModal) closeContactModal.addEventListener('click', () => contactModal.classList.remove('show'));
+if (cancelContact) cancelContact.addEventListener('click', () => contactModal.classList.remove('show'));
 
 contactForm.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     if (!currentContact) {
-        const { data: existingContacts } = await supabaseClient
-            .from('trusted_contacts')
-            .select('id')
-            .eq('user_id', currentUser.id);
-        
-        if (existingContacts && existingContacts.length >= 1) {
+        const { data: existing } = await supabaseClient
+            .from('trusted_contacts').select('id').eq('user_id', currentUser.id);
+        if (existing && existing.length >= 1) {
             alert('Free plan allows 1 trusted contact. Upgrade to Premium for 3 contacts!');
             return;
         }
     }
-    
+
     const contactData = {
         name: document.getElementById('contact-name').value,
         email: document.getElementById('contact-email').value,
         relationship: document.getElementById('contact-relationship').value,
         user_id: currentUser.id
     };
-    
+
     if (currentContact) {
-        const { error } = await supabaseClient
-            .from('trusted_contacts')
-            .update(contactData)
-            .eq('id', currentContact.id);
-        if (error) console.error('Error updating contact:', error);
+        await supabaseClient.from('trusted_contacts').update(contactData).eq('id', currentContact.id);
     } else {
-        const { error } = await supabaseClient
-            .from('trusted_contacts')
-            .insert([contactData]);
-        if (error) console.error('Error creating contact:', error);
+        await supabaseClient.from('trusted_contacts').insert([contactData]);
     }
-    
+
     contactModal.classList.remove('show');
     loadContacts();
 });
 
 async function editContact(id) {
-    const { data, error } = await supabaseClient
-        .from('trusted_contacts')
-        .select('*')
-        .eq('id', id)
-        .single();
-    
-    if (error) {
-        console.error('Error loading contact:', error);
-        return;
-    }
-    openContactModal(data);
+    const { data } = await supabaseClient.from('trusted_contacts').select('*').eq('id', id).single();
+    if (data) openContactModal(data);
 }
 
 async function deleteContact(id) {
-    if (!confirm('Are you sure you want to remove this trusted contact?')) return;
-    
-    const { error } = await supabaseClient
-        .from('trusted_contacts')
-        .delete()
-        .eq('id', id);
-    
-    if (error) {
-        console.error('Error deleting contact:', error);
-        return;
-    }
+    if (!confirm('Are you sure you want to remove this contact?')) return;
+    await supabaseClient.from('trusted_contacts').delete().eq('id', id);
     loadContacts();
 }
 
@@ -377,243 +321,186 @@ async function deleteContact(id) {
 // CHECK-IN SYSTEM
 // ============================================
 
-const statusIndicator = document.getElementById('status-indicator');
-const statusIcon = document.getElementById('status-icon');
-const statusTitle = document.getElementById('status-title');
-const statusMessage = document.getElementById('status-message');
-const lastCheckinDate = document.getElementById('last-checkin-date');
-const nextCheckinDate = document.getElementById('next-checkin-date');
-const currentFrequency = document.getElementById('current-frequency');
-const checkinNowBtn = document.getElementById('checkin-now-btn');
-const saveFrequencyBtn = document.getElementById('save-frequency-btn');
-
-document.querySelector('[data-view="checkin"]').addEventListener('click', () => {
-    if (currentUser) loadCheckinStatus();
-});
-
 async function loadCheckinStatus() {
+    const statusIndicator = document.getElementById('status-indicator');
+    const statusIcon = document.getElementById('status-icon');
+    const statusTitle = document.getElementById('status-title');
+    const statusMessage = document.getElementById('status-message');
+    const lastCheckinDate = document.getElementById('last-checkin-date');
+    const nextCheckinDate = document.getElementById('next-checkin-date');
+    const currentFrequency = document.getElementById('current-frequency');
+    const checkinNowBtn = document.getElementById('checkin-now-btn');
+    const saveFrequencyBtn = document.getElementById('save-frequency-btn');
+
     const { data, error } = await supabaseClient
         .from('check_ins')
         .select('*')
         .eq('user_id', currentUser.id)
         .single();
-    
+
     if (error && error.code !== 'PGRST116') {
         console.error('Error loading check-in:', error);
         return;
     }
-    
-    if (!data) {
-        await createInitialCheckin();
-        return;
+
+    let checkinData = data;
+
+    if (!checkinData) {
+        const { data: newData, error: insertError } = await supabaseClient
+            .from('check_ins')
+            .insert([{
+                user_id: currentUser.id,
+                frequency_days: 30,
+                last_check_in: new Date().toISOString()
+            }])
+            .select()
+            .single();
+
+        if (insertError) { console.error('Error creating check-in:', insertError); return; }
+        checkinData = newData;
     }
-    
-    displayCheckinStatus(data);
-}
 
-async function createInitialCheckin() {
-    const { data, error } = await supabaseClient
-        .from('check_ins')
-        .insert([{
-            user_id: currentUser.id,
-            frequency_days: 30,
-            last_check_in: new Date().toISOString()
-        }])
-        .select()
-        .single();
-    
-    if (error) {
-        console.error('Error creating check-in:', error);
-        return;
+    function displayCheckinStatus(d) {
+        const now = new Date();
+        const nextCheckin = new Date(d.next_check_in);
+        const daysLeft = Math.ceil((nextCheckin - now) / (1000 * 60 * 60 * 24));
+
+        lastCheckinDate.textContent = new Date(d.last_check_in).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+        nextCheckinDate.textContent = nextCheckin.toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+        currentFrequency.textContent = d.frequency_days + ' days';
+
+        const radio = document.querySelector('input[name="frequency"][value="' + d.frequency_days + '"]');
+        if (radio) radio.checked = true;
+
+        if (daysLeft < 0) {
+            statusIndicator.className = 'status-indicator overdue';
+            statusIcon.textContent = '⚠️';
+            statusTitle.textContent = 'Check-In Overdue!';
+            statusMessage.innerHTML = 'You missed your check-in by <strong>' + Math.abs(daysLeft) + ' days</strong>';
+        } else if (daysLeft <= 3) {
+            statusIndicator.className = 'status-indicator warning';
+            statusIcon.textContent = '⏰';
+            statusTitle.textContent = 'Check-In Due Soon';
+            statusMessage.innerHTML = 'Your check-in is due in <strong>' + daysLeft + ' day' + (daysLeft === 1 ? '' : 's') + '</strong>';
+        } else {
+            statusIndicator.className = 'status-indicator ok';
+            statusIcon.textContent = '✅';
+            statusTitle.textContent = "You're all set!";
+            statusMessage.innerHTML = 'Your next check-in is due in <strong>' + daysLeft + ' days</strong>';
+        }
     }
-    displayCheckinStatus(data);
-}
 
-function displayCheckinStatus(data) {
-    const now = new Date();
-    const lastCheckin = new Date(data.last_check_in);
-    const nextCheckin = new Date(data.next_check_in);
-    const daysLeft = Math.ceil((nextCheckin - now) / (1000 * 60 * 60 * 24));
-    
-    lastCheckinDate.textContent = formatDate(lastCheckin);
-    nextCheckinDate.textContent = formatDate(nextCheckin);
-    currentFrequency.textContent = `${data.frequency_days} days`;
-    
-    const freqRadio = document.querySelector(`input[name="frequency"][value="${data.frequency_days}"]`);
-    if (freqRadio) freqRadio.checked = true;
-    
-    if (daysLeft < 0) {
-        statusIndicator.className = 'status-indicator overdue';
-        statusIcon.textContent = '⚠️';
-        statusTitle.textContent = 'Check-In Overdue!';
-        statusMessage.innerHTML = `You missed your check-in by <strong>${Math.abs(daysLeft)} days</strong>`;
-    } else if (daysLeft <= 3) {
-        statusIndicator.className = 'status-indicator warning';
-        statusIcon.textContent = '⏰';
-        statusTitle.textContent = 'Check-In Due Soon';
-        statusMessage.innerHTML = `Your check-in is due in <strong>${daysLeft} day${daysLeft === 1 ? '' : 's'}</strong>`;
-    } else {
-        statusIndicator.className = 'status-indicator ok';
-        statusIcon.textContent = '✅';
-        statusTitle.textContent = "You're all set!";
-        statusMessage.innerHTML = `Your next check-in is due in <strong>${daysLeft} days</strong>`;
-    }
-}
+    displayCheckinStatus(checkinData);
 
-function formatDate(date) {
-    const options = { year: 'numeric', month: 'long', day: 'numeric' };
-    return date.toLocaleDateString('en-GB', options);
-}
-
-if (checkinNowBtn) {
-    checkinNowBtn.addEventListener('click', async () => {
-        const { data, error } = await supabaseClient
+    checkinNowBtn.onclick = async function() {
+        const { data: updated } = await supabaseClient
             .from('check_ins')
             .update({ last_check_in: new Date().toISOString() })
             .eq('user_id', currentUser.id)
             .select()
             .single();
-        
-        if (error) {
-            console.error('Error checking in:', error);
-            alert('Error checking in. Please try again.');
-            return;
-        }
-        
-        const originalText = checkinNowBtn.textContent;
-        checkinNowBtn.textContent = '✓ Check-In Successful!';
-        checkinNowBtn.style.background = '#10b981';
-        
-        setTimeout(() => {
-            checkinNowBtn.textContent = originalText;
-            checkinNowBtn.style.background = '';
-        }, 2000);
-        
-        displayCheckinStatus(data);
-    });
-}
 
-if (saveFrequencyBtn) {
-    saveFrequencyBtn.addEventListener('click', async () => {
-        const selectedFrequency = parseInt(document.querySelector('input[name="frequency"]:checked').value);
-        
-        if (selectedFrequency === 60 || selectedFrequency === 90) {
-            alert('60 and 90 day check-ins are Premium only. Upgrade in Settings!');
+        if (updated) {
+            checkinNowBtn.textContent = '✓ Check-In Successful!';
+            checkinNowBtn.style.background = '#10b981';
+            setTimeout(() => {
+                checkinNowBtn.textContent = '✓ I\'m OK - Check In Now';
+                checkinNowBtn.style.background = '';
+            }, 2000);
+            displayCheckinStatus(updated);
+        }
+    };
+
+    saveFrequencyBtn.onclick = async function() {
+        const selected = parseInt(document.querySelector('input[name="frequency"]:checked').value);
+        if (selected === 60 || selected === 90) {
+            alert('60 and 90 day check-ins are Premium only!');
             return;
         }
-        
-        const { data, error } = await supabaseClient
+        const { data: updated } = await supabaseClient
             .from('check_ins')
-            .update({ frequency_days: selectedFrequency })
+            .update({ frequency_days: selected })
             .eq('user_id', currentUser.id)
             .select()
             .single();
-        
-        if (error) {
-            console.error('Error updating frequency:', error);
-            return;
+
+        if (updated) {
+            saveFrequencyBtn.textContent = '✓ Saved!';
+            saveFrequencyBtn.style.background = '#10b981';
+            setTimeout(() => {
+                saveFrequencyBtn.textContent = 'Save Frequency';
+                saveFrequencyBtn.style.background = '';
+            }, 2000);
+            displayCheckinStatus(updated);
         }
-        
-        const originalText = saveFrequencyBtn.textContent;
-        saveFrequencyBtn.textContent = '✓ Saved!';
-        saveFrequencyBtn.style.background = '#10b981';
-        
-        setTimeout(() => {
-            saveFrequencyBtn.textContent = originalText;
-            saveFrequencyBtn.style.background = '';
-        }, 2000);
-        
-        displayCheckinStatus(data);
-    });
+    };
 }
 
 // ============================================
 // SETTINGS
 // ============================================
 
-document.querySelector('[data-view="settings"]').addEventListener('click', () => {
-    if (currentUser) loadSettings();
-});
-
 function loadSettings() {
     const settingsEmail = document.getElementById('settings-email');
+    const settingsCreated = document.getElementById('settings-created');
+    const passwordForm = document.getElementById('password-form');
+    const deleteAccountBtn = document.getElementById('delete-account-btn');
+
     if (settingsEmail) settingsEmail.textContent = currentUser.email;
 
-    const settingsCreated = document.getElementById('settings-created');
     if (settingsCreated) {
-        const createdDate = new Date(currentUser.created_at);
-        settingsCreated.textContent = createdDate.toLocaleDateString('en-GB', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
+        settingsCreated.textContent = new Date(currentUser.created_at).toLocaleDateString('en-GB', {
+            year: 'numeric', month: 'long', day: 'numeric'
         });
     }
-}
 
-const passwordForm = document.getElementById('password-form');
-if (passwordForm) {
-    passwordForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
+    if (passwordForm) {
+        passwordForm.onsubmit = async function(e) {
+            e.preventDefault();
+            const newPassword = document.getElementById('new-password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const passwordError = document.getElementById('password-error');
+            const passwordSuccess = document.getElementById('password-success');
 
-        const newPassword = document.getElementById('new-password').value;
-        const confirmPassword = document.getElementById('confirm-password').value;
-        const passwordError = document.getElementById('password-error');
-        const passwordSuccess = document.getElementById('password-success');
+            passwordError.classList.remove('show');
+            passwordSuccess.style.display = 'none';
 
-        passwordError.classList.remove('show');
-        passwordSuccess.style.display = 'none';
+            if (newPassword !== confirmPassword) {
+                passwordError.textContent = 'Passwords do not match!';
+                passwordError.classList.add('show');
+                return;
+            }
 
-        if (newPassword !== confirmPassword) {
-            passwordError.textContent = 'Passwords do not match!';
-            passwordError.classList.add('show');
-            return;
-        }
+            if (newPassword.length < 8) {
+                passwordError.textContent = 'Password must be at least 8 characters!';
+                passwordError.classList.add('show');
+                return;
+            }
 
-        if (newPassword.length < 8) {
-            passwordError.textContent = 'Password must be at least 8 characters!';
-            passwordError.classList.add('show');
-            return;
-        }
+            const { error } = await supabaseClient.auth.updateUser({ password: newPassword });
 
-        try {
-            const { error } = await supabaseClient.auth.updateUser({
-                password: newPassword
-            });
+            if (error) {
+                passwordError.textContent = error.message;
+                passwordError.classList.add('show');
+            } else {
+                passwordSuccess.style.display = 'block';
+                passwordForm.reset();
+                setTimeout(() => { passwordSuccess.style.display = 'none'; }, 3000);
+            }
+        };
+    }
 
-            if (error) throw error;
+    if (deleteAccountBtn) {
+        deleteAccountBtn.onclick = async function() {
+            if (!confirm('Are you sure? This cannot be undone!')) return;
+            if (!confirm('This will permanently delete ALL your data. Are you absolutely sure?')) return;
 
-            passwordSuccess.style.display = 'block';
-            passwordForm.reset();
-
-            setTimeout(() => {
-                passwordSuccess.style.display = 'none';
-            }, 3000);
-
-        } catch (error) {
-            passwordError.textContent = error.message;
-            passwordError.classList.add('show');
-        }
-    });
-}
-
-const deleteAccountBtn = document.getElementById('delete-account-btn');
-if (deleteAccountBtn) {
-    deleteAccountBtn.addEventListener('click', async () => {
-        const confirm1 = confirm('Are you sure you want to delete your account? This cannot be undone!');
-        if (!confirm1) return;
-
-        const confirm2 = confirm('This will permanently delete ALL your vault entries, trusted contacts, and account data. Are you absolutely sure?');
-        if (!confirm2) return;
-
-        try {
             await supabaseClient.from('vault_entries').delete().eq('user_id', currentUser.id);
             await supabaseClient.from('trusted_contacts').delete().eq('user_id', currentUser.id);
             await supabaseClient.from('check_ins').delete().eq('user_id', currentUser.id);
             await supabaseClient.auth.signOut();
-            alert('Your account has been deleted. We\'re sorry to see you go!');
+            alert('Your account has been deleted.');
             window.location.href = 'index.html';
-        } catch (error) {
-            alert('Error deleting account: ' + error.message);
-        }
-    });
+        };
+    }
 }
