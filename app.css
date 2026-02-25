@@ -144,10 +144,13 @@ body {
     align-items: center;
     gap: 1.5rem;
 }
-
 .user-email {
     color: #6b7280;
     font-size: 0.9rem;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .app-main {
