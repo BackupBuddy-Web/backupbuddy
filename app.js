@@ -391,8 +391,37 @@ async function loadCheckinStatus() {
     }
 
     displayCheckinStatus(checkinData);
-
+if (checkinNowBtn) {
     checkinNowBtn.onclick = async function() {
+        try {
+            const { data: updated, error } = await supabaseClient
+                .from('check_ins')
+                .update({ last_check_in: new Date().toISOString() })
+                .eq('user_id', currentUser.id)
+                .select()
+                .single();
+
+            if (error) {
+                console.error('Check-in error:', error);
+                alert('Error checking in: ' + error.message);
+                return;
+            }
+
+            if (updated) {
+                checkinNowBtn.textContent = '✓ Check-In Successful!';
+                checkinNowBtn.style.background = '#10b981';
+                setTimeout(() => {
+                    checkinNowBtn.textContent = '✓ I\'m OK - Check In Now';
+                    checkinNowBtn.style.background = '';
+                }, 2000);
+                displayCheckinStatus(updated);
+            }
+        } catch (err) {
+            console.error('Check-in failed:', err);
+            alert('Check-in failed. Please try again.');
+        }
+    };
+}
         const { data: updated } = await supabaseClient
             .from('check_ins')
             .update({ last_check_in: new Date().toISOString() })
